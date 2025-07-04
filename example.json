@@ -1,0 +1,10 @@
+{
+    "group1": {
+        "name": "example",
+        "rep": 10
+    },
+    "group2": {
+        "name": "example2",
+        "rep": -300
+    }
+}
