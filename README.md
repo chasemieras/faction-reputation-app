@@ -23,3 +23,9 @@ Written in Python with [customtkinter](https://customtkinter.tomschimansky.com/)
     - source FRA/bin/activate
     - pip3 install customtkinter
 3. Run 'python3 app.py' to run the code
+
+## Building the App
+
+- Ensure you are in the venv for FRA
+- pyinstaller is install in the venv: 'pip install pyinstaller'
+- Run 'pyinstaller --noconfirm --onefile --windowed app.py'
