@@ -14,7 +14,6 @@ class GroupFrame(customtkinter.CTkFrame):
         self.rep_callback = rep_callback
         self.rep = start_rep
 
-        # Row 0 - Label and value side-by-side, left-aligned
         self.label = customtkinter.CTkLabel(
             self, text=f"{self.group_name} Reputation:")
         self.label.grid(row=0, column=0, padx=5, pady=5, sticky="w")
@@ -24,7 +23,6 @@ class GroupFrame(customtkinter.CTkFrame):
             self, textvariable=self.rep_var)
         self.rep_display.grid(row=0, column=1, padx=5, pady=5, sticky="w")
 
-        # Row 1 - Entry on left, Submit on right
         self.entry = customtkinter.CTkEntry(
             self, placeholder_text="Enter new rep (-1000 to 1000)", width=240)
         self.entry.bind("<Return>", self.submit_rep)
@@ -35,12 +33,10 @@ class GroupFrame(customtkinter.CTkFrame):
             self, text="Submit", width=80, command=self.submit_rep)
         self.submit_btn.grid(row=1, column=2, padx=5, pady=5, sticky="e")
 
-        # Row 2 - Centered frame holding the 6 buttons
         self.button_frame = customtkinter.CTkFrame(
             self, fg_color="transparent")
         self.button_frame.grid(row=2, column=0, columnspan=3, pady=5)
 
-        # Place buttons inside the frame, tightly packed
         buttons = [
             ("-10", -10),
             ("-5", -5),
@@ -61,7 +57,6 @@ class GroupFrame(customtkinter.CTkFrame):
         try:
             value = int(self.entry.get())
             new_rep = self.rep + value
-            # Clamp the value between -1000 and 1000
             if new_rep > 1000:
                 new_rep = 1000
             elif new_rep < -1000:
@@ -86,7 +81,7 @@ class App(customtkinter.CTk):
         super().__init__()
         self.title("Faction Reputation App")
         self.geometry("500x400")
-        self.groups = {}  # Store group reputations
+        self.groups = {}
 
         self.save_btn = customtkinter.CTkButton(
             self, text="Save", command=self.save_groups)
@@ -110,6 +105,7 @@ class App(customtkinter.CTk):
         self.grid_columnconfigure(1, weight=1)
 
     def save_groups(self):
+        """Saves the groups to a json file"""
         data = {}
         counter = 0
 
@@ -128,6 +124,7 @@ class App(customtkinter.CTk):
         print("Outputted data to data.json")
 
     def load_groups(self):
+        """Loads the groups from a json file"""
         file_path = "data.json"
         try:
             with open(file_path, 'r', encoding="utf-8") as file:
@@ -144,6 +141,7 @@ class App(customtkinter.CTk):
                 f"Error: Could not decode JSON from '{file_path}'. Check for valid JSON format.")
 
     def open_add_group_dialog(self):
+        """Opens a popup to add a new group"""
         dialog = customtkinter.CTkToplevel(self)
         dialog.title("Add Group")
         dialog.geometry("300x240")
@@ -190,6 +188,7 @@ class App(customtkinter.CTk):
         submit_btn.pack()
 
     def add_group(self, name, rep):
+        """Adds the group to the group frame"""
         def rep_callback(group_name, new_rep):
             self.groups[group_name] = new_rep
 
@@ -197,7 +196,7 @@ class App(customtkinter.CTk):
         group_frame.pack(padx=5, pady=5, fill="x")
         self.groups[name] = rep
         print("Current groups and reputations:")
-        for group, reputation in self.groups.items():  # TODO use this to make the save function
+        for group, reputation in self.groups.items():
             print(f"  {group}: {reputation}")
 
 
