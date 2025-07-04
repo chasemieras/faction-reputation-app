@@ -1,5 +1,6 @@
 """Brings in customtkinter for the program"""
 import json
+from tkinter import filedialog
 import customtkinter
 
 customtkinter.set_appearance_mode("dark")
@@ -32,6 +33,9 @@ class GroupFrame(customtkinter.CTkFrame):
         self.submit_btn = customtkinter.CTkButton(
             self, text="Submit", width=80, command=self.submit_rep)
         self.submit_btn.grid(row=1, column=2, padx=5, pady=5, sticky="e")
+        self.delete_btn = customtkinter.CTkButton(
+            self, text="Remove", width=80, command=self.delete_group)
+        self.delete_btn.grid(row=1, column=3, padx=5, pady=5, sticky="e")
 
         self.button_frame = customtkinter.CTkFrame(
             self, fg_color="transparent")
@@ -51,6 +55,10 @@ class GroupFrame(customtkinter.CTkFrame):
                 self.button_frame, text=text, width=30, command=lambda v=val: self.add_to_rep(v)
             )
             btn.grid(row=0, column=i, padx=2)
+
+    def delete_group(self):
+        """Removes the group"""
+        self.destroy()
 
     def submit_rep(self, event=None):
         """Adds the submitted reputation to the group"""
@@ -82,63 +90,126 @@ class App(customtkinter.CTk):
         self.title("Faction Reputation App")
         self.geometry("500x400")
         self.groups = {}
+        self.file_name = "data"
+
+        self.file_name_entry = customtkinter.CTkEntry(
+            self, placeholder_text="Change default file name (data)", width=240)
+        self.file_name_entry.bind("<Return>", self.submit_file_name)
+        self.file_name_entry.grid(row=0, column=0, padx=5, pady=5, sticky="w")
+        self.file_name_entry_btn = customtkinter.CTkButton(
+            self, text="Save File Name", command=self.submit_file_name)
+        self.file_name_entry_btn.grid(
+            row=0, column=1, padx=5, pady=5, sticky="ew")
+        self.open_file_btn = customtkinter.CTkButton(
+            self, text="Open File", command=self.open_file)
+        self.open_file_btn.grid(
+            row=0, column=2, padx=5, pady=5, sticky="ew")
 
         self.save_btn = customtkinter.CTkButton(
             self, text="Save", command=self.save_groups)
-        self.save_btn.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+        self.save_btn.grid(row=1, column=0, padx=5, pady=5, sticky="ew")
 
         self.load_bn = customtkinter.CTkButton(
-            self, text="Load", command=self.load_groups)
-        self.load_bn.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+            self, text="Load", command=self.load_groups_from_default)
+        self.load_bn.grid(row=1, column=1, padx=5, pady=5, sticky="ew")
 
         self.add_group_btn = customtkinter.CTkButton(
             self, text="Add Group", command=self.open_add_group_dialog)
         self.add_group_btn.grid(
-            row=1, column=0, columnspan=2, padx=10, pady=10, sticky="ew")
+            row=2, column=0, columnspan=3, padx=10, pady=10, sticky="ew")
 
         self.groups_frame = customtkinter.CTkScrollableFrame(self)
-        self.groups_frame.grid(row=2, column=0, columnspan=2,
+        self.groups_frame.grid(row=3, column=0, columnspan=3,
                                padx=10, pady=10, sticky="nsew")
 
         self.grid_rowconfigure(2, weight=1)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
 
+        self.notification_label = customtkinter.CTkLabel(
+            self, text="", fg_color="gray20")
+        self.notification_label.grid(
+            row=4, column=0, columnspan=3, sticky="ew", padx=0, pady=(0, 2))
+        self.notification_label.configure(wraplength=400)
+        self.notification_label.grid_remove()
+
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
+
+    def open_file(self):
+        """Opens a specific file then loads the data"""
+        filename = filedialog.askopenfilename(
+            title="Select a File",
+            filetypes=[("JSON files", "*.json")]
+        )
+
+        if filename:
+            with open(filename, 'r', encoding="utf-8") as file:
+                data = json.load(file)
+                self.load_groups(data)
+                msg = f"Loaded data from file: {filename}"
+                print(msg)
+                self.show_notification(msg)
+
+    def submit_file_name(self):
+        """Changes where the data will be saved to"""
+        new_name = self.file_name_entry.get()
+        if len(new_name) == 0:
+            msg = "Please enter text to change the file name"
+        else:
+            self.file_name = new_name
+            msg = f"File name changed to {self.file_name}"
+        print(msg)
+        self.show_notification(msg)
+
+    def show_notification(self, message):
+        """Show a notification at the bottom for 5 seconds"""
+        self.notification_label.configure(text=message)
+        self.notification_label.grid()
+        self.after(5000, self.notification_label.grid_remove)
+
     def save_groups(self):
         """Saves the groups to a json file"""
         data = {}
         counter = 0
 
-        for group, reputation in self.groups.items():
-            counter += 1
-            group_key = f"group{counter}"
-            data[group_key] = {
-                "name": group,
-                "rep": reputation
-            }
-            print(f"  {group}: {reputation}")
+        if len(self.groups) == 0:
+            msg = "There are no groups to output"
+            print(msg)
+            self.show_notification(msg)
+        else:
+            file_path = f"{self.file_name}.json"
+            for group, reputation in self.groups.items():
+                counter += 1
+                group_key = f"group{counter}"
+                data[group_key] = {
+                    "name": group,
+                    "rep": reputation
+                }
+                print(f"  {group}: {reputation}")
 
-        file_path = "data.json"
-        with open(file_path, 'w', encoding="utf-8") as json_file:
-            json.dump(data, json_file, indent=4)
-        print("Outputted data to data.json")
+            with open(file_path, 'w', encoding="utf-8") as json_file:
+                json.dump(data, json_file, indent=4)
+            msg = f"Outputted data to {file_path}"
+            print(msg)
+            self.show_notification(msg)
 
-    def load_groups(self):
+    def load_groups_from_default(self):
         """Loads the groups from a json file"""
-        file_path = "data.json"
-        try:
-            with open(file_path, 'r', encoding="utf-8") as file:
-                data = json.load(file)
-                for group_key, group_info in data.items():
-                    name = group_info["name"]
-                    rep = group_info["rep"]
-                    print(f"{group_key} ({name}): {rep}")
-                    self.add_group(name, rep)
-        except FileNotFoundError:
-            print(f"Error: The file '{file_path}' was not found.")
-        except json.JSONDecodeError:
-            print(
-                f"Error: Could not decode JSON from '{file_path}'. Check for valid JSON format.")
+        file_path = f"{self.file_name}.json"
+        with open(file_path, 'r', encoding="utf-8") as file:
+            data = json.load(file)
+            self.load_groups(data)
+
+    def load_groups(self, data):
+        """Loads the groups from a json file"""
+        for group_key, group_info in data.items():
+            name = group_info["name"]
+            rep = group_info["rep"]
+            print(f"{group_key} ({name}): {rep}")
+            self.add_group(name, rep)
 
     def open_add_group_dialog(self):
         """Opens a popup to add a new group"""
